@@ -1,4 +1,4 @@
-# Elevator Extension
+# Rick and Morty typing game
 
 ## Development
 
