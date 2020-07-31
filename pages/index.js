@@ -1,9 +1,6 @@
 import React from "react";
+import Game from "@components/Game";
 
-class Index extends React.Component {
-  render() {
-    return <div>Welcome to Rick and Morty typing game</div>;
-  }
+export default function Index() {
+  return <Game />;
 }
-
-export default Index;
