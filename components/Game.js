@@ -18,8 +18,17 @@ export default function Game() {
       case "RESTART_GAME": {
         return { ...state, gameState: "STARTED", score: 0 };
       }
-      case "SET_CHARACTER": {
+      case "TYPE_CHARACTER": {
         return { ...state, currentCharacter: action.character };
+      }
+      case "SUBMIT_CHARACTER": {
+        let newScore = state.score;
+        if (name === action.character) {
+          newScore += 1;
+        } else {
+          newScore -= 1;
+        }
+        return { ...state, currentCharacter: "", score: newScore };
       }
 
       default: {
@@ -50,10 +59,16 @@ export default function Game() {
             placeholder="Name Character"
             value={currentCharacter}
             onChange={(e) => {
-              if (e.key === " ") {
+              dispatch({
+                type: "TYPE_CHARACTER",
+                character: e.target.value,
+              });
+            }}
+            onKeyPress={(e) => {
+              if (e.key === "Enter") {
                 dispatch({
-                  type: "SET_CHARACTER",
-                  character: e.target.value.trim(),
+                  type: "SUBMIT_CHARACTER",
+                  character: e.target.value,
                 });
               }
             }}
