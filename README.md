@@ -12,4 +12,5 @@ $ docker-compose up
 
 # Terminal 2
 $ docker-compose exec app bash
+> npm run dev
 ```

@@ -1,10 +1,21 @@
-import { useReducer, useEffect } from "react";
+import { useState, useReducer, useEffect } from "react";
+import { getCharacter } from "rickmortyapi";
+import Character from "@components/Character";
 
-export default function Game() {
+function getRandomNumberForCharacter() {
+  const numberOfCharacters = 591;
+  return Math.floor(Math.random() * numberOfCharacters);
+}
+
+const randomNumber = getRandomNumberForCharacter();
+
+function useGameReducer() {
   const initialState = {
     gameState: "NOT_STARTED",
     score: 0,
     currentCharacter: "",
+    guessedCharacter: [],
+    mostRecentlySunmitted: "",
   };
 
   const [state, dispatch] = useReducer((state, action) => {
@@ -23,12 +34,27 @@ export default function Game() {
       }
       case "SUBMIT_CHARACTER": {
         let newScore = state.score;
-        if (name === action.character) {
+        if (character === action.character) {
           newScore += 1;
+          return {
+            ...state,
+            currentCharacter: "",
+            mostRecentlySunmitted: action.character,
+            score: newScore,
+          };
         } else {
           newScore -= 1;
+          return {
+            ...state,
+            currentCharacter: "",
+            mostRecentlySunmitted: null,
+            score: newScore,
+          };
         }
-        return { ...state, currentCharacter: "", score: newScore };
+      }
+
+      case "GET_CHARACTER": {
+        return { ...state, guessedCharacter: [] };
       }
 
       default: {
@@ -37,7 +63,45 @@ export default function Game() {
     }
   }, initialState);
 
-  let { gameState, score, currentCharacter } = state;
+  return [state, dispatch];
+}
+
+function useCharacter(characterId, dispatch) {
+  const [ids, setIds] = useState([]);
+
+  useEffect(() => {
+    let current = true;
+    const randomCharacter = getCharacter(characterId);
+
+    randomCharacter
+      .then((res) => {
+        const name = res.name;
+        const image = res.image;
+        const id = res.id;
+        if (current) {
+          setName(name);
+          setImage(image);
+          setIds(ids.concat(id));
+        }
+      })
+      .catch((error) => {
+        setError(error);
+      });
+
+    return () => {
+      current = false;
+    };
+  }, [characterId]);
+
+  return [character, img];
+}
+
+export default function Game() {
+  const [state, dispatch] = useGameReducer();
+  const [name, setName] = useState("");
+  const [image, setImage] = useState(null);
+  const { gameState, score, currentCharacter, guessedCharacter } = state;
+  useCharacter(randomNumber, dispatch);
 
   return (
     <>
@@ -53,6 +117,7 @@ export default function Game() {
       )}
       {gameState === "STARTED" && (
         <>
+          <Character image={image} array={guessedCharacter} />
           <input
             type="text"
             name=""
