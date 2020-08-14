@@ -1,13 +1,15 @@
 import { useState, useReducer, useEffect } from "react";
 import { getCharacter } from "rickmortyapi";
-import Character from "@components/Character";
+import styles from "@scss/Game.module.scss";
+
+// import Character from "@components/Character";
 
 function getRandomNumberForCharacter() {
   const numberOfCharacters = 591;
   return Math.floor(Math.random() * numberOfCharacters);
 }
 
-const randomNumber = getRandomNumberForCharacter();
+// const randomNumber = getRandomNumberForCharacter();
 
 function useGameReducer() {
   const initialState = {
@@ -98,26 +100,20 @@ function useCharacter(characterId, dispatch) {
 
 export default function Game() {
   const [state, dispatch] = useGameReducer();
-  const [name, setName] = useState("");
-  const [image, setImage] = useState(null);
+  // const [name, setName] = useState("");
+  // const [image, setImage] = useState(null);
   const { gameState, score, currentCharacter, guessedCharacter } = state;
-  useCharacter(randomNumber, dispatch);
+  // useCharacter(randomNumber, dispatch);
 
   return (
-    <>
-      <h1>Rick and Morty typing game</h1>
+    <div className={styles.container}>
+      <h1>Do you know Rick and Morty?</h1>
+
       {gameState === "NOT_STARTED" && (
-        <button
-          onClick={() => {
-            dispatch({ type: "START_GAME" });
-          }}
-        >
-          Starts Game
-        </button>
+        <GameNotStartedComponent dispatch={dispatch} />
       )}
       {gameState === "STARTED" && (
         <>
-          <Character image={image} array={guessedCharacter} />
           <input
             type="text"
             name=""
@@ -159,6 +155,32 @@ export default function Game() {
           </button>
         </>
       )}
-    </>
+      <style jsx global>{`
+        body {
+          margin: 0;
+          padding: 0;
+          font-size: 18px;
+          font-weight: 400;
+          line-height: 1.8;
+          color: #333;
+          font-family: sans-serif;
+        }
+        h1 {
+          font-weight: 700;
+        }
+      `}</style>
+    </div>
+  );
+}
+
+function GameNotStartedComponent(props) {
+  return (
+    <button
+      onClick={() => {
+        props.dispatch({ type: "START_GAME" });
+      }}
+    >
+      Starts Game
+    </button>
   );
 }

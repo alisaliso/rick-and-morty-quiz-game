@@ -13,7 +13,8 @@
     "next": "^9.5.1",
     "react": "^16.13.1",
     "react-dom": "^16.13.1",
-    "rickmortyapi": "^0.3.0"
+    "rickmortyapi": "^0.3.0",
+    "sass": "^1.26.10"
   },
   "devDependencies": {},
   "author": "alisaliso",
