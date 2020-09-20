@@ -1,23 +1,18 @@
-import { useState, useReducer, useEffect } from "react";
+import React, { useState, useEffect, useReducer, useCallback } from "react";
 import { getCharacter } from "rickmortyapi";
+
+// Components
+import Question from "@components/Question";
+import Answers from "@components/Answers";
+
+// Helpers
+import formQuestions from "../helpers/formQuestions";
 import styles from "@scss/Game.module.scss";
-
-// import Character from "@components/Character";
-
-function getRandomNumberForCharacter() {
-  const numberOfCharacters = 591;
-  return Math.floor(Math.random() * numberOfCharacters);
-}
-
-// const randomNumber = getRandomNumberForCharacter();
 
 function useGameReducer() {
   const initialState = {
     gameState: "NOT_STARTED",
     score: 0,
-    currentCharacter: "",
-    guessedCharacter: [],
-    mostRecentlySunmitted: "",
   };
 
   const [state, dispatch] = useReducer((state, action) => {
@@ -26,37 +21,18 @@ function useGameReducer() {
         return { ...state, gameState: "STARTED" };
       }
       case "END_GAME": {
-        return { ...state, gameState: "FINISHED", currentCharacter: "" };
+        return { ...state, gameState: "FINISHED" };
       }
       case "RESTART_GAME": {
         return { ...state, gameState: "STARTED", score: 0 };
       }
-      case "TYPE_CHARACTER": {
-        return { ...state, currentCharacter: action.character };
-      }
       case "SUBMIT_CHARACTER": {
         let newScore = state.score;
-        if (character === action.character) {
-          newScore += 1;
-          return {
-            ...state,
-            currentCharacter: "",
-            mostRecentlySunmitted: action.character,
-            score: newScore,
-          };
-        } else {
-          newScore -= 1;
-          return {
-            ...state,
-            currentCharacter: "",
-            mostRecentlySunmitted: null,
-            score: newScore,
-          };
-        }
-      }
-
-      case "GET_CHARACTER": {
-        return { ...state, guessedCharacter: [] };
+        newScore += 1;
+        return {
+          ...state,
+          score: newScore,
+        };
       }
 
       default: {
@@ -68,42 +44,141 @@ function useGameReducer() {
   return [state, dispatch];
 }
 
-function useCharacter(characterId, dispatch) {
-  const [ids, setIds] = useState([]);
+const filerCharacters = (res) =>
+  res.map((character) => {
+    return {
+      id: character.id,
+      name: character.name,
+      image: character.image,
+    };
+  });
 
-  useEffect(() => {
-    let current = true;
-    const randomCharacter = getCharacter(characterId);
+const initial = 60000;
 
-    randomCharacter
+export default function Game() {
+  const [state, dispatch] = useGameReducer();
+  const { gameState, score } = state;
+  const [currentQuestion, setCurrentQuestion] = useState(0);
+  const [currentAnswer, setCurrentAnswer] = useState(0);
+  const [time, setTime] = useState(initial);
+
+  const [answers, setAnswers] = useState([]);
+  const [error, setError] = useState([]);
+  const [characters, setCharacters] = useState([]);
+
+  const fetchCharacters = useCallback(() => {
+    const characters = getCharacter();
+    characters
       .then((res) => {
-        const name = res.name;
-        const image = res.image;
-        const id = res.id;
-        if (current) {
-          setName(name);
-          setImage(image);
-          setIds(ids.concat(id));
-        }
+        const filter = filerCharacters(res.results);
+        setCharacters(formQuestions(filter));
       })
       .catch((error) => {
         setError(error);
       });
+  }, []);
 
-    return () => {
-      current = false;
-    };
-  }, [characterId]);
+  useEffect(() => {
+    fetchCharacters();
+  }, []);
 
-  return [character, img];
-}
+  const question = characters[currentQuestion];
 
-export default function Game() {
-  const [state, dispatch] = useGameReducer();
-  // const [name, setName] = useState("");
-  // const [image, setImage] = useState(null);
-  const { gameState, score, currentCharacter, guessedCharacter } = state;
-  // useCharacter(randomNumber, dispatch);
+  const handleClick = (e) => {
+    setCurrentAnswer(e.target.innerHTML);
+    setError("");
+  };
+
+  const renderError = () => {
+    if (!error) {
+      return;
+    }
+
+    return <div>{error}</div>;
+  };
+
+  const next = () => {
+    const answer = { id: question.id, answer: currentAnswer };
+
+    if (!currentAnswer) {
+      setError("Please select your answer");
+      return;
+    }
+    answers.push(answer);
+    setAnswers(answers);
+    setCurrentAnswer("");
+
+    if (question.correctAnswer === answer.answer) {
+      dispatch({ type: "SUBMIT_CHARACTER" });
+    }
+
+    if (currentQuestion + 1 < characters.length) {
+      setCurrentQuestion(currentQuestion + 1);
+      return;
+    }
+
+    dispatch({ type: "END_GAME" });
+  };
+
+  const renderResultsData = () => {
+    return answers.map((answer) => {
+      const question = characters.find((question) => question.id === answer.id);
+
+      return (
+        <div key={question.id}>
+          <span>{question.correctAnswer}</span> -{" "}
+          <span
+            className={`answer-${question.correctAnswer === answer.answer}`}
+          >
+            {answer.answer}
+          </span>
+        </div>
+      );
+    });
+  };
+
+  const restart = () => {
+    dispatch({ type: "RESTART_GAME" });
+    setAnswers([]);
+    setTime(initial);
+    setCurrentAnswer("");
+    setCurrentQuestion(0);
+  };
+
+  const Timer = () => {
+    const addZero = (number) => (number <= 9 ? `0${number}` : number);
+
+    let initialMillis = Date.now();
+
+    useEffect(() => {
+      if (!time) return;
+
+      const inerval = setInterval(() => {
+        let current = Date.now();
+
+        setTime(time - (current - initialMillis));
+        initialMillis = current;
+      }, 10);
+
+      return () => {
+        clearInterval(inerval);
+      };
+    }, [time]);
+
+    if (time <= 0) {
+      dispatch({ type: "END_GAME" });
+      return <h1>time is up</h1>;
+    } else {
+      let res = time / 1000;
+
+      return (
+        <h1>
+          {addZero(Math.floor(res.toPrecision() / 60))}:
+          {addZero(Math.floor(res.toPrecision()) % 60)}
+        </h1>
+      );
+    }
+  };
 
   return (
     <div className={styles.container}>
@@ -112,63 +187,32 @@ export default function Game() {
       {gameState === "NOT_STARTED" && (
         <GameNotStartedComponent dispatch={dispatch} />
       )}
+
       {gameState === "STARTED" && (
         <>
-          <input
-            type="text"
-            name=""
-            placeholder="Name Character"
-            value={currentCharacter}
-            onChange={(e) => {
-              dispatch({
-                type: "TYPE_CHARACTER",
-                character: e.target.value,
-              });
-            }}
-            onKeyPress={(e) => {
-              if (e.key === "Enter") {
-                dispatch({
-                  type: "SUBMIT_CHARACTER",
-                  character: e.target.value,
-                });
-              }
-            }}
+          <Timer />
+          {renderError()}
+          <GameStartedComponent
+            image={question.image}
+            answers={question.answers}
+            currentAnswer={currentAnswer}
+            handleClick={handleClick}
+            next={next}
+            dispatch={dispatch}
           />
-          <button
-            onClick={() => {
-              dispatch({ type: "END_GAME" });
-            }}
-          >
-            Give up
-          </button>
         </>
       )}
+
       {gameState === "FINISHED" && (
         <>
-          <div>Score: {score}</div>
-          <button
-            onClick={() => {
-              dispatch({ type: "RESTART_GAME" });
-            }}
-          >
-            Start over?
-          </button>
+          <h1>Results</h1>
+          <h1>
+            {score} out of {answers.length}
+          </h1>
+          <ul>{renderResultsData()}</ul>
+          <button onClick={restart}>Start over</button>
         </>
       )}
-      <style jsx global>{`
-        body {
-          margin: 0;
-          padding: 0;
-          font-size: 18px;
-          font-weight: 400;
-          line-height: 1.8;
-          color: #333;
-          font-family: sans-serif;
-        }
-        h1 {
-          font-weight: 700;
-        }
-      `}</style>
     </div>
   );
 }
@@ -180,7 +224,21 @@ function GameNotStartedComponent(props) {
         props.dispatch({ type: "START_GAME" });
       }}
     >
-      Starts Game
+      Start the Game
     </button>
+  );
+}
+
+function GameStartedComponent(props) {
+  return (
+    <>
+      <Question question={props.image} />
+      <Answers
+        answers={props.answers}
+        currentAnswer={props.currentAnswer}
+        handleClick={props.handleClick}
+      />
+      <button onClick={props.next}>Confirm</button>
+    </>
   );
 }
