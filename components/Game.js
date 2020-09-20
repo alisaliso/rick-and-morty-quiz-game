@@ -213,6 +213,78 @@ export default function Game() {
           <button onClick={restart}>Start over</button>
         </>
       )}
+      <style jsx global>{`
+        body {
+          margin: 0;
+          padding: 0;
+          font-size: 18px;
+          font-weight: 400;
+          line-height: 1.8;
+          color: #f7f7f7;
+          font-family: sans-serif;
+          background-color: #000000;
+        }
+        h1 {
+          font-weight: 700;
+        }
+        p {
+          margin-bottom: 10px;
+        }
+        button {
+          background-color: #1d35f8;
+          border: none;
+          color: #f7f7f7;
+          border-bottom-left-radius: 4px;
+          font-size: 16px;
+          text-transform: uppercase;
+          background: linear-gradient(-135deg, transparent 10px, #1d35f8 10px);
+          transition: all 0.2s ease;
+          padding: 20px 30px;
+          position: relative;
+          cursor: pointer;
+          font-weight: 700;
+        }
+        button:before {
+          content: "";
+          position: absolute;
+          background-color: #000000;
+          width: 6px;
+          height: 6px;
+          transform: rotate(45deg);
+          bottom: 34px;
+          left: -3px;
+        }
+        button:hover {
+          background: linear-gradient(-135deg, transparent 10px, #11198c 10px);
+          transition: all 0.2s ease;
+        }
+        li {
+          list-style: none;
+        }
+
+        .list__item {
+          padding: 10px 20px;
+          cursor: pointer;
+        }
+
+        .list__item:hover {
+          background-color: #11198c;
+        }
+
+        .list__item:not(:last-child) {
+          border-bottom: 1px solid white;
+        }
+
+        .list__item.selected {
+          background-color: #1d35f8;
+        }
+        .answer-true {
+          color: green;
+        }
+        .answer-false {
+          color: tomato;
+        }
+      `}</style>
     </div>
   );
 }
