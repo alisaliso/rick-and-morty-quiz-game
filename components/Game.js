@@ -181,15 +181,13 @@ export default function Game() {
   };
 
   return (
-    <div className={styles.container}>
-      <h1>Do you know Rick and Morty?</h1>
-
+    <div>
       {gameState === "NOT_STARTED" && (
         <GameNotStartedComponent dispatch={dispatch} />
       )}
 
       {gameState === "STARTED" && (
-        <>
+        <div className={styles.container__start}>
           <Timer />
           {renderError()}
           <GameStartedComponent
@@ -200,18 +198,18 @@ export default function Game() {
             next={next}
             dispatch={dispatch}
           />
-        </>
+        </div>
       )}
 
       {gameState === "FINISHED" && (
-        <>
+        <div className={styles.container__start}>
           <h1>Results</h1>
           <h1>
             {score} out of {answers.length}
           </h1>
           <ul>{renderResultsData()}</ul>
           <button onClick={restart}>Start over</button>
-        </>
+        </div>
       )}
       <style jsx global>{`
         body {
@@ -291,13 +289,16 @@ export default function Game() {
 
 function GameNotStartedComponent(props) {
   return (
-    <button
-      onClick={() => {
-        props.dispatch({ type: "START_GAME" });
-      }}
-    >
-      Start the Game
-    </button>
+    <div className={styles.container__center}>
+      <h1>Do you know Rick and Morty?</h1>
+      <button
+        onClick={() => {
+          props.dispatch({ type: "START_GAME" });
+        }}
+      >
+        Start the Game
+      </button>
+    </div>
   );
 }
 
