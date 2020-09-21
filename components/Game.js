@@ -1,4 +1,11 @@
-import React, { useState, useEffect, useReducer, useCallback } from "react";
+import React, {
+  useState,
+  useEffect,
+  useReducer,
+  useCallback,
+  forwardRef,
+  useImperativeHandle,
+} from "react";
 import { getCharacter } from "rickmortyapi";
 
 // Components
@@ -54,14 +61,46 @@ const filerCharacters = (res) =>
   });
 
 const initial = 60000;
+const Timer = (props) => {
+  const [time, setTime] = useState(props.initial);
+  const addZero = (number) => (number <= 9 ? `0${number}` : number);
+
+  let initialMillis = Date.now();
+
+  useEffect(() => {
+    if (!time) return;
+    const inerval = setInterval(() => {
+      let current = Date.now();
+
+      setTime((prevTime) => prevTime - (current - initialMillis));
+      initialMillis = current;
+    }, 10);
+
+    return () => {
+      clearInterval(inerval);
+    };
+  }, [time]);
+
+  if (time <= 0) {
+    props.dispatch({ type: "END_GAME" });
+    return <h1>time is up</h1>;
+  } else {
+    let res = time / 1000;
+
+    return (
+      <h1>
+        {addZero(Math.floor(res.toPrecision() / 60))}:
+        {addZero(Math.floor(res.toPrecision()) % 60)}
+      </h1>
+    );
+  }
+};
 
 export default function Game() {
   const [state, dispatch] = useGameReducer();
   const { gameState, score } = state;
   const [currentQuestion, setCurrentQuestion] = useState(0);
   const [currentAnswer, setCurrentAnswer] = useState(0);
-  const [time, setTime] = useState(initial);
-
   const [answers, setAnswers] = useState([]);
   const [error, setError] = useState([]);
   const [characters, setCharacters] = useState([]);
@@ -140,44 +179,8 @@ export default function Game() {
   const restart = () => {
     dispatch({ type: "RESTART_GAME" });
     setAnswers([]);
-    setTime(initial);
     setCurrentAnswer("");
     setCurrentQuestion(0);
-  };
-
-  const Timer = () => {
-    const addZero = (number) => (number <= 9 ? `0${number}` : number);
-
-    let initialMillis = Date.now();
-
-    useEffect(() => {
-      if (!time) return;
-
-      const inerval = setInterval(() => {
-        let current = Date.now();
-
-        setTime((prevTime) => prevTime - (current - initialMillis));
-        initialMillis = current;
-      }, 10);
-
-      return () => {
-        clearInterval(inerval);
-      };
-    }, [time]);
-
-    if (time <= 0) {
-      dispatch({ type: "END_GAME" });
-      return <h1>time is up</h1>;
-    } else {
-      let res = time / 1000;
-
-      return (
-        <h1>
-          {addZero(Math.floor(res.toPrecision() / 60))}:
-          {addZero(Math.floor(res.toPrecision()) % 60)}
-        </h1>
-      );
-    }
   };
 
   return (
@@ -188,7 +191,7 @@ export default function Game() {
 
       {gameState === "STARTED" && (
         <div className={styles.container__start}>
-          <Timer />
+          <Timer dispatch={dispatch} initial={initial} />
           {renderError()}
           <GameStartedComponent
             image={question.image}
