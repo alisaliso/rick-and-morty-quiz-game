@@ -1,16 +1,10 @@
-import React, {
-  useState,
-  useEffect,
-  useReducer,
-  useCallback,
-  forwardRef,
-  useImperativeHandle,
-} from "react";
+import React, { useState, useEffect, useReducer, useCallback } from "react";
 import { getCharacter } from "rickmortyapi";
 
 // Components
 import Question from "@components/Question";
 import Answers from "@components/Answers";
+import Timer from "@components/Timer";
 
 // Helpers
 import formQuestions from "../helpers/formQuestions";
@@ -61,40 +55,6 @@ const filerCharacters = (res) =>
   });
 
 const initial = 60000;
-const Timer = (props) => {
-  const [time, setTime] = useState(props.initial);
-  const addZero = (number) => (number <= 9 ? `0${number}` : number);
-
-  let initialMillis = Date.now();
-
-  useEffect(() => {
-    if (!time) return;
-    const inerval = setInterval(() => {
-      let current = Date.now();
-
-      setTime((prevTime) => prevTime - (current - initialMillis));
-      initialMillis = current;
-    }, 10);
-
-    return () => {
-      clearInterval(inerval);
-    };
-  }, [time]);
-
-  if (time <= 0) {
-    props.dispatch({ type: "END_GAME" });
-    return <h1>time is up</h1>;
-  } else {
-    let res = time / 1000;
-
-    return (
-      <h1>
-        {addZero(Math.floor(res.toPrecision() / 60))}:
-        {addZero(Math.floor(res.toPrecision()) % 60)}
-      </h1>
-    );
-  }
-};
 
 export default function Game() {
   const [state, dispatch] = useGameReducer();
@@ -191,7 +151,7 @@ export default function Game() {
 
       {gameState === "STARTED" && (
         <div className={styles.container__start}>
-          <Timer dispatch={dispatch} initial={initial} />
+          <Timer dispatch={dispatch} initialTimeMs={initial} />
           {renderError()}
           <GameStartedComponent
             image={question.image}
