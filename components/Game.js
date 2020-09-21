@@ -156,7 +156,7 @@ export default function Game() {
       const inerval = setInterval(() => {
         let current = Date.now();
 
-        setTime(time - (current - initialMillis));
+        setTime((prevTime) => prevTime - (current - initialMillis));
         initialMillis = current;
       }, 10);
 
